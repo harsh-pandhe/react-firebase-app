@@ -1,42 +1,79 @@
-// Login.js
-
 import React, { useState } from 'react';
-import { firestore } from './firebase'; // Adjust the path based on your project structure
+import { useNavigate } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import * as authService from './services/auth';
+import './Login.css';
 
-const Login = () => {
+function Login() {
     const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const navigate = useNavigate();
 
-    const handleLogin = async () => {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
         try {
-            const usersCollection = firestore.collection('users');
-            const userDoc = await usersCollection.where('email', '==', email).get();
+            // Use the authenticateUser function from authService
+            const result = await authService.authenticateUser(email, password, navigate);
 
-            if (!userDoc.empty) {
-                // Access the first document in the query result
-                const userData = userDoc.docs[0].data();
-                console.log('User Found:', userData);
-                // Perform authentication logic here
+            if (result.success) {
+                console.log('Login successful:', result.user);
+                navigate('/dashboard');
             } else {
-                console.log('User not found');
+                // Display toast message for authentication failure
+                toast.error(result.message, {
+                    position: toast.POSITION.TOP_CENTER,
+                });
+                console.log('Login failed:', result.message);
             }
         } catch (error) {
-            console.error('Error fetching user:', error);
+            console.error('Error during login:', error);
+            // Display a generic error toast message
+            toast.error('An error occurred. Please try again.', {
+                position: toast.POSITION.TOP_CENTER,
+            });
         }
     };
 
     return (
-        <div>
+        <div className="login-container login-page">
             <h2>Login</h2>
-            <label htmlFor="email">Email:</label>
-            <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+            <form className="login-form" onSubmit={handleSubmit}>
+                <label>
+                    Email:
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
+                </label>
+                <label>
+                    Password:
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        autoComplete="current-password webauthn"
+                    />
+                </label>
+                <button type="submit">Login</button>
+            </form>
+
+            {/* Toast container for displaying messages */}
+            <ToastContainer
+                position="top-center"
+                autoClose={5000} // Adjust the duration as needed
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
             />
-            <button onClick={handleLogin}>Login</button>
         </div>
     );
-};
+}
 
 export default Login;

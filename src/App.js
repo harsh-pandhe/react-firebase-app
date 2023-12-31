@@ -1,39 +1,32 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { collection, addDoc } from 'firebase/firestore';
+// App.js
 
-const firebaseConfig = {
-    apiKey: "AIzaSyDoeEBE7c6X5xyrmRjUBqyPm3yui-T52YM",
-    authDomain: "harshpandhe-3beeb.firebaseapp.com",
-    databaseURL: "https://harshpandhe-3beeb-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "harshpandhe-3beeb",
-    storageBucket: "harshpandhe-3beeb.appspot.com",
-    messagingSenderId: "963335796302",
-    appId: "1:963335796302:web:0ebe2b9dca438b215e751f",
-    measurementId: "G-CYEKV0FXYD"
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Home from './components/Home';
+import Dashboard from './components/Dashboard';
+import Login from './Login';
+import * as authService from './services/auth';
+
+const ProtectedRoute = ({ element, ...rest }) => {
+    const isAuthenticated = authService.getAuthenticationStatus();
+    return isAuthenticated ? element : <Navigate to="/login" />;
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-try {
-    const docRef = await addDoc(collection(db, "users"), {
-        first: "Ada",
-        last: "Lovalce",
-        born: 1988
-    });
-    console.log(docRef.id);
-} catch (e) {
-    console.log(e);
-
-}
 const App = () => {
-
     return (
-        <div>
-            <h1>Your App</h1>
-            {/* Other components or content can be added here */}
-        </div>
+        <Router>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route
+                    path="/login"
+                    element={<Login authenticateUser={authService.authenticateUser} />}
+                />
+                <Route
+                    path="/dashboard"
+                    element={<ProtectedRoute element={<Dashboard />} />}
+                />
+            </Routes>
+        </Router>
     );
 };
 
